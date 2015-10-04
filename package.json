@@ -1,0 +1,15 @@
+{
+  "name": "probeshifter",
+  "version": "1.0.0",
+  "description": "Test your API in black-box mode.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sebastian Osuna <jsebastianosuna@hotmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "node-rest-client": "^1.5.1",
+    "unirest": "^0.4.2"
+  }
+}
