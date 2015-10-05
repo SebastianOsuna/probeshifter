@@ -27,12 +27,15 @@ Also, by default, the probe will not log anything, so `verbose = false`.
 
         @config.verbose        ||= false
 All probes have an internal list of workers and it's onw `HOST` property in case
-you want to redefine it.
+you want to redefine it. Also a counter of how many workers have finished.
 
         # Initialize properties
         @_workers = []
+        @_results = []
+        @_finishedWorkers = 0
         # Define probe host
         @HOST = Probeshifter.HOST
+
 You can also include a `description` property in the config object. This description
 will be used while logging so you can keep track of your probe's activity.
 
@@ -53,7 +56,31 @@ and puts them to work.
         console.log "Probe '#{@config.description}' running..." if @config.verbose
         [0...@config.workers].forEach (n) =>
           @_workers.push(w = Worker.new this, n)
+          @_results.push {}
           # Start worker
           console.log "Worker '#{@config.description}':#{n} started." if @config.verbose
           w.start()
-          w.on 'end', @gatherResults
+
+When each worker is done, it will call the `gatherResults` or `gatherErrors` listeners
+to handle the result/errors of each worker.
+
+          # Bind event listeners
+          w.on 'end', @gatherResults.bind(this, n)
+          w.on 'error', @gatherErrors.bind(this, n)
+
+## Handling workers results
+
+
+      gatherResults: (workerId, response) =>
+        @_finishedWorkers++
+        console.log "Worker '#{@config.description}':#{workerId} done." if @config.verbose
+        @_results[workerId].data = response.body
+        # All workers are done
+        this.emit 'end', @_results if @_finishedWorkers is @config.workers
+
+      gatherErrors: (workerId, error) =>
+        @_finishedWorkers++
+        console.log "Worker '#{@config.description}':#{workerId} done with errors." if @config.verbose
+        @_results[workerId].error = error
+        # All workers are done
+        this.emit 'end', @_results if @_finishedWorkers is @config.workers

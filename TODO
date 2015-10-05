@@ -1,4 +1,3 @@
 1. Compose probes
-2. Gather probe results
 3. Integrate with mocha or any other testing framework
 4. Dist build file.

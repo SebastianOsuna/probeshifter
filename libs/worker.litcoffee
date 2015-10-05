@@ -44,7 +44,7 @@ The `start` function is where the HTTP call is made. The worker will not fire th
 request unless it's `READY` to do so, though.
 
       start: ->
-        return unless @status is READY
+        return unless @_status is READY
         console.log "Worker #{@probe.config.description}:#{@_id} hitting #{@method} - #{@url}" if @verbose
         req = RestClient  @method, @url
 All request are assumed to be made in JSON format.
@@ -53,6 +53,12 @@ All request are assumed to be made in JSON format.
 Authentication headers are added to the HTTP request if present.
 
         req.header @credentialHeaders if @credentialHeaders
+
+Data is fetched from the probe.
+
+        req.send @probe.data if typeof @probe.data is 'object'
+        req.send @probe.data() if typeof @probe.data is 'function'
+
 Request response is then handle by the `handleResponse` function.
 
         req.end @handleResponse
@@ -62,15 +68,16 @@ Request response is then handle by the `handleResponse` function.
           @handleError response.error
           return
 
-        @emitter.emitr 'end', response
+        @emitter.emit 'end', response
 
 If the request wasn't successful, the worker will throw exceptions according to
 the type of error recieved from the server.
 
       handleError: (err) ->
-
+        @emitter.emit 'error', err
         # throw 'Couldn\'t reach host.' if err.code is 'ECONNREFUSED'
         # throw 'Service requires authentication' if err.status is 401
         # throw 'Unknown error: ' + err
 
-      on: @emitter.on
+      on: (event, listener) ->
+        @emitter.on event, listener
