@@ -84,3 +84,10 @@ to handle the result/errors of each worker.
         @_results[workerId].error = error
         # All workers are done
         this.emit 'end', @_results if @_finishedWorkers is @config.workers
+
+      pipe: (probe, transformation) ->
+        console.log transformation
+        @on 'end', (data) ->
+          probe.data = if transformation then transformation data, probe else data
+          console.log probe.data
+          probe.run()
